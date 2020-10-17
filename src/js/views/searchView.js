@@ -56,6 +56,20 @@ const renderRecipe = recipe => {
     elements.searchResultList.insertAdjacentHTML('beforeend', markup);
 };
 
+const renderNoRecipe = recipe => {
+    const markup = `
+        <a class="results__link results__link" href="/">
+            <div class="results__data">
+                <h4 class="results__name">Please try again</h4>
+                <p class="results__author">There is no recipes for this search !</p>
+            </div>
+        </a>
+    `;
+ 
+
+    elements.searchResultList.insertAdjacentHTML('beforeend', markup);
+};
+
 // Type: prev || next
 const createButton = (page, type) => `
 <button class="btn-inline results__btn--${type}" data-goto="${type === 'prev' ? page - 1 : page + 1}">
@@ -86,11 +100,17 @@ const renderButtons = (page, numResults, resultsPerPage) => {
 
 export const renderResults = (recipes, page = 1, resultPerPage = 10) => {
     // render results of current page
-    const start = (page - 1) * resultPerPage;
-    const end = page * resultPerPage;
 
-    recipes.slice(start, end).forEach(renderRecipe);
+    if(recipes){
+        const start = (page - 1) * resultPerPage;
+        const end = page * resultPerPage;
 
-    // reder pagination btns
-    renderButtons(page, recipes.length, resultPerPage);
+        recipes.slice(start, end).forEach(renderRecipe);
+
+        // reder pagination btns
+        renderButtons(page, recipes.length, resultPerPage);
+    }else{
+        renderNoRecipe();
+    }
 };
+

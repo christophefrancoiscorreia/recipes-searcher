@@ -23,30 +23,40 @@ const state = {}
 const controlSearch = async (query) => {
     // 1- Get query from view
 
-    if(query === ""){
-        query = searchView.getInput();
-    }
-
+     
     if(query) {
         // 2-  New search object and add to state
 
         state.search = new Search(query);
 
         // 3- Prepare UI for results
-        searchView.clearInput();
-        searchView.clearResults();
-        renderLoader(elements.searchResult);
 
         try {
+            
+            searchView.clearInput();
+            searchView.clearResults();
+            renderLoader(elements.searchResult);
             // 4- Search for recipes
             await state.search.getResults();
 
             // 5- Render results on UI
             clearLoader();
+
+            const countEl = Array.from(document.querySelectorAll('.results__link'));
+            countEl.forEach((el, i) => {
+                el.classList.remove('queuing');
+            });
+
             searchView.renderResults(state.search.result);
         } catch (error) {
+
             clearLoader();
-            alert('Something wrong with the search...');
+
+            await state.search.getResults();
+
+            searchView.renderResults(state.search.result);
+
+
         }
 
 
@@ -55,7 +65,8 @@ const controlSearch = async (query) => {
 
 elements.searchForm.addEventListener('submit', e => {
     e.preventDefault();
-    controlSearch();
+    const query = searchView.getInput();
+    controlSearch(query);
 });
 
 
@@ -149,10 +160,12 @@ const controlList = () => {
     // Add each ingredient to the list
     state.recipe.ingredients.forEach(el => {
         const item = state.list.addItem(el.count, el.unit, el.ingredient);
-        listView.renderItm(item);
+        listView.renderItem(item);
     });
 
     elements.clearShopping.classList.add('active');
+
+    
 
 }
 
@@ -172,7 +185,13 @@ elements.shopping.addEventListener('click', e => {
 
         state.list.updateCount(id, val);
 
-    }
+    } 
+});
+
+elements.clearShoppingBtn.addEventListener('click', e => {
+    listView.deleteAllItems();
+    state.list.deleteAllItems();
+    elements.clearShopping.classList.remove('active');
 });
 
 elements.addToShopping.addEventListener('submit', e => {
@@ -183,7 +202,7 @@ elements.addToShopping.addEventListener('submit', e => {
     if(field !== ""){
         if(!state.list) state.list = new List();
         const item = state.list.addItem(1, select, field);
-        listView.renderItm(item);
+        listView.renderItem(item);
 
         elements.clearShopping.classList.add('active');
     }
@@ -193,8 +212,7 @@ elements.addToShopping.addEventListener('submit', e => {
  * Like controller
  * 
  */
-// test
-state.likes = new Likes();
+
 
 const controlLike = () => {
     if(!state.likes) state.likes = new Likes();
@@ -236,19 +254,27 @@ const controlLike = () => {
 
 
 // INIT page loading (Restore, First appearance)
-window.addEventListener('load', () => {
+window.addEventListener('load', () => { 
     state.likes = new Likes();
+    state.lists = new List();
 
     // Restore likes
     state.likes.readStorage();
 
+    // Restore Shopping List
+    state.lists.readStorage();
+
     // Toggle like menu btn
     likesView.toggleLikeMenu(state.likes.getNumLikes());
+    
+    // Toggle clear list btn
+    listView.toggleClearListBtn(state.lists.getNumItems());
 
     // Render the existing likes
     state.likes.likes.forEach(like => likesView.renderLike(like));
-
-
+    
+    // Render the existing lists
+    state.lists.items.forEach(item => listView.renderItem(item));
 
 });
 
@@ -258,9 +284,6 @@ window.addEventListener('load', () => {
  * 
  */
 
-const controlSearchInput = () => {
-
-};
 
 // Handling recipe btn clicks
 elements.recipe.addEventListener('click', e => {
@@ -282,9 +305,17 @@ elements.recipe.addEventListener('click', e => {
         controlLike();
     }else if(e.target.matches('.results__link, .results__link *')){
         e.preventDefault();
-        const query = e.target.closest('.results__link').dataset.inputsearch;
+        const self = e.target.closest('.results__link');
+        const query = self.dataset.inputsearch;
+        const countEl = Array.from(document.querySelectorAll('.results__link'));
         
-        controlSearch(query);
+        if(!self.classList.contains('queuing')){
+            controlSearch(query);
+            countEl.forEach((el, i) => {
+                el.classList.add('queuing');
+            });
+        }
+
     }
     
 });

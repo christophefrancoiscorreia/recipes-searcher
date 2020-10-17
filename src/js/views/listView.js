@@ -1,6 +1,6 @@
 import {elements} from './base';
 
-export const renderItm = item => {
+export const renderItem = item => {
     const markup = `
     <li class="shopping__item" data-itemid="${item.id}">
         <div class="shopping__count">
@@ -19,8 +19,20 @@ export const renderItm = item => {
     elements.shopping.insertAdjacentHTML('beforeend', markup);
 }
 
+export const toggleClearListBtn = numlikes => {
+    const el = elements.clearShopping;
+    numlikes > 0 ? el.classList.add('active') : el.classList.remove('active');
+};
+
 export const deleteItem = id => {
     const item = document.querySelector(`[data-itemid="${id}"]`);
 
     if(item) item.parentElement.removeChild(item);
+}
+
+export const deleteAllItems = () => { 
+    const countEl = Array.from(document.querySelectorAll('.shopping__item'));
+    countEl.forEach((el, i) => {
+        el.parentElement.removeChild(el);
+    });
 }
